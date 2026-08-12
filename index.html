@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Manutenção para refinamento</title>
+<meta name="description" content="Estamos em manutenção para refinamento. Voltamos em breve." />
+<style>
+  :root{ --deep:#2b0f6b; --mid:#5b21c9; --glow:#b45cff; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    background:radial-gradient(120% 100% at 85% 10%, var(--glow) 0%, transparent 55%),
+               radial-gradient(100% 90% at 10% 90%, #6d3bff 0%, transparent 60%),
+               linear-gradient(140deg, var(--deep) 0%, var(--mid) 55%, #3a12a0 100%);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
+    perspective:1200px;
+  }
+  #rain{position:absolute;inset:0;pointer-events:none;opacity:.55}
+  .orb{position:absolute;border-radius:50%;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.28), rgba(255,255,255,0) 60%);
+       box-shadow:inset 0 0 60px rgba(255,255,255,.25)}
+  .orb.a{width:46vw;height:46vw;top:-24vw;left:-16vw}
+  .orb.b{width:52vw;height:52vw;bottom:-28vw;right:-14vw}
+  .name{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-size:clamp(.8rem,1.6vw,1.1rem);letter-spacing:.5em;text-transform:lowercase;
+    color:rgba(255,255,255,.28);animation:float 7s ease-in-out infinite;
+    text-shadow:0 0 18px rgba(255,255,255,.25);white-space:nowrap;
+  }
+  @keyframes float{0%,100%{transform:translate(-50%,-64%)}50%{transform:translate(-50%,-40%)}}
+  .wrap{position:relative;text-align:center;padding:0 6vw;transform-style:preserve-3d;
+        transition:transform .25s cubic-bezier(.22,1,.36,1)}
+  h1,h2{
+    color:rgba(255,255,255,.16);
+    -webkit-text-stroke:1.5px rgba(255,255,255,.55);
+    text-shadow:0 1px 0 rgba(255,255,255,.45), 0 -1px 1px rgba(0,0,0,.25),
+                0 12px 40px rgba(180,92,255,.45);
+    backdrop-filter:blur(6px);
+    line-height:.95;letter-spacing:-.02em;font-weight:600;
+  }
+  h1{font-size:clamp(2.8rem,11vw,9rem)}
+  h2{font-size:clamp(1.8rem,7.6vw,6rem);margin-top:.1em;font-weight:400}
+  @media (prefers-reduced-motion:reduce){.name{animation:none}#rain{display:none}}
+</style>
+</head>
+<body>
+  <canvas id="rain"></canvas>
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <span class="name">jose curioso</span>
+  <main class="wrap" id="wrap">
+    <h1>Manutenção</h1>
+    <h2>para refinamento</h2>
+  </main>
+
+<script>
+// chuva suave
+const c = document.getElementById('rain'), x = c.getContext('2d');
+let drops = [];
+function size(){ c.width = innerWidth; c.height = innerHeight;
+  drops = Array.from({length: Math.round(innerWidth/12)}, () => ({
+    x: Math.random()*innerWidth, y: Math.random()*innerHeight,
+    l: 8 + Math.random()*18, v: .8 + Math.random()*1.6, o: .1 + Math.random()*.3 }));
+}
+size(); addEventListener('resize', size);
+let tilt = 0;
+(function loop(){
+  x.clearRect(0,0,c.width,c.height);
+  x.lineCap = 'round';
+  for (const d of drops){
+    x.strokeStyle = 'rgba(255,255,255,'+d.o+')'; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(d.x, d.y); x.lineTo(d.x + tilt*d.l*.4, d.y + d.l); x.stroke();
+    d.y += d.v*2.2; d.x += tilt*.6;
+    if (d.y > c.height){ d.y = -20; d.x = Math.random()*c.width; }
+  }
+  requestAnimationFrame(loop);
+})();
+
+// giroscópio (com fallback de mouse)
+const wrap = document.getElementById('wrap');
+function apply(rx, ry){
+  tilt = Math.max(-1, Math.min(1, ry/25));
+  wrap.style.transform = `rotateX(${(-rx/6).toFixed(2)}deg) rotateY(${(ry/6).toFixed(2)}deg)`;
+}
+addEventListener('deviceorientation', e => {
+  if (e.beta == null && e.gamma == null) return;
+  apply(e.beta || 0, e.gamma || 0);
+});
+addEventListener('mousemove', e => {
+  apply((e.clientY/innerHeight - .5) * 30, (e.clientX/innerWidth - .5) * 30);
+});
+addEventListener('click', () => {
+  const D = window.DeviceOrientationEvent;
+  if (D && typeof D.requestPermission === 'function') D.requestPermission();
+}, { once: true });
+</script>
+</body>
+</html>
